@@ -1,7 +1,7 @@
 apiVersion: knowledgecatalog.googleapis.com/v1alpha1
 kind: EnrichmentWorkflow
 metadata:
-  name: revenue-retention-self-healing-byog
+  name: revenue-retention-self-healing-kc
   project: opm-looker-core-demo-instance
   location: us-central1
   contextSet: sales-analytics
