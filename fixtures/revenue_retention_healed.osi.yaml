@@ -97,13 +97,17 @@ semantic_model:
             datatype: Date
             description: "First day of the billing month for the MRR ledger snapshot."
           - name: starting_mrr
-            expression: start_mrr_usd
+            expression: opening_mrr_usd
             datatype: Decimal
-            description: "Starting monthly recurring revenue at the beginning of the billing period in USD."
+            description: "Opening monthly recurring revenue at the start of the billing period in USD (healed from start_mrr_usd -> opening_mrr_usd)."
           - name: expansion_mrr
             expression: expansion_mrr_usd
             datatype: Decimal
             description: "Additional monthly recurring revenue from seat upgrades and add-on SKUs in USD."
+          - name: contraction_mrr
+            expression: contraction_mrr_usd
+            datatype: Decimal
+            description: "Monthly recurring revenue lost from seat downgrades or tier contractions in USD while the account remains active."
           - name: churn_mrr
             expression: churned_mrr_usd
             datatype: Decimal
@@ -151,6 +155,11 @@ semantic_model:
         expression: "SUM(MrrMovement.expansion_mrr)"
         datatype: Decimal
         description: "Total expansion monthly recurring revenue in USD."
+      - name: total_contraction_mrr
+        entity: MrrMovement
+        expression: "SUM(MrrMovement.contraction_mrr)"
+        datatype: Decimal
+        description: "Total contraction monthly recurring revenue in USD from seat downgrades."
       - name: total_churn_mrr
         entity: MrrMovement
         expression: "SUM(MrrMovement.churn_mrr)"
@@ -158,11 +167,11 @@ semantic_model:
         description: "Total churned monthly recurring revenue in USD."
       - name: net_retained_mrr
         entity: MrrMovement
-        expression: "SUM(MrrMovement.starting_mrr) + SUM(MrrMovement.expansion_mrr) - SUM(MrrMovement.churn_mrr)"
+        expression: "SUM(MrrMovement.starting_mrr) + SUM(MrrMovement.expansion_mrr) - SUM(MrrMovement.contraction_mrr) - SUM(MrrMovement.churn_mrr)"
         datatype: Decimal
-        description: "Ending retained monthly recurring revenue in USD (starting + expansion - churn)."
+        description: "Ending retained monthly recurring revenue in USD (starting + expansion - contraction - churn)."
       - name: net_revenue_retention
         entity: MrrMovement
-        expression: "(SUM(MrrMovement.starting_mrr) + SUM(MrrMovement.expansion_mrr) - SUM(MrrMovement.churn_mrr)) / NULLIF(SUM(MrrMovement.starting_mrr), 0)"
+        expression: "(SUM(MrrMovement.starting_mrr) + SUM(MrrMovement.expansion_mrr) - SUM(MrrMovement.contraction_mrr) - SUM(MrrMovement.churn_mrr)) / NULLIF(SUM(MrrMovement.starting_mrr), 0)"
         datatype: Decimal
         description: "Certified Net Revenue Retention (NRR) ratio measuring retained and expanded recurring revenue relative to starting MRR."
