@@ -1,0 +1,27 @@
+apiVersion: knowledgecatalog.googleapis.com/v1alpha1
+kind: EnrichmentWorkflow
+metadata:
+  name: revenue-retention-self-healing-byog
+  project: opm-looker-core-demo-instance
+  location: us-central1
+  contextSet: sales-analytics
+spec:
+  workflowMode: SELF_LEARNING
+  triggers:
+    physicalSchemaDrift: true
+    dryRunProbeIntervalMinutes: 15
+    targetDataset: "//bigquery.googleapis.com/projects/opm-looker-core-demo-instance/datasets/sales_analytics_demo"
+  verificationGates:
+    requireZeroByteDryRunProbe: true
+    requireKcmdStrictValidation: true
+    benchmarkSuitePath: "golden_mrr_questions.eval.yaml"
+    nonRegressionGate: 1.00
+  outputRouting:
+    destination: BYOG_PULL_REQUEST
+    stageKcStudioChangeRequest: true
+    gitRepository:
+      provider: GITHUB
+      repository: "looker-open-source/semantic-models-demo"
+      baseBranch: "main"
+      headBranchPrefix: "kc-self-heal/schema-drift-"
+      ontologyFilePath: "catalog/EntryGroups/sales-analytics/revenue_retention.yaml"

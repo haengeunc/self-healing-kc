@@ -1,0 +1,168 @@
+version: "0.2.0.dev0/google"
+
+semantic_model:
+  - name: revenue_retention
+    description: "Certified enterprise SaaS Monthly Recurring Revenue (MRR) and Net Revenue Retention (NRR) semantic ontology for Finance and GTM analytics."
+    deployments:
+      - name: default
+        target: "//bigquery.googleapis.com/projects/opm-looker-core-demo-instance/datasets/sales_analytics_demo/propertyGraphs/revenue_retention"
+
+    entities:
+      - name: Account
+        description: "Master enterprise customer account dimension tracking commercial segment, sales territory, and subscription lifecycle status."
+        source: "//bigquery.googleapis.com/projects/opm-looker-core-demo-instance/datasets/sales_analytics_demo/tables/tbl_accounts_v2"
+        primary_key:
+          - acc_id
+        fields:
+          - name: account_id
+            expression: acc_id
+            datatype: String
+            description: "Unique enterprise customer account identifier (Primary Key)."
+          - name: account_name
+            expression: account_name
+            datatype: String
+            description: "Legal display name of the enterprise customer account."
+          - name: region
+            expression: region
+            datatype: String
+            description: "Geographic sales territory: AMER, APAC, or EMEA."
+          - name: segment
+            expression: segment
+            datatype: String
+            description: "Commercial segment tier (Enterprise, Strategic)."
+          - name: industry
+            expression: industry
+            datatype: String
+            description: "Primary industry vertical of the customer."
+          - name: status
+            expression: status
+            datatype: String
+            description: "Current subscription lifecycle status (Active, Churned)."
+
+      - name: Subscription
+        description: "Commercial SaaS subscription contracts linking enterprise customer accounts to product SKU tiers, ARR commitments, and renewal dates."
+        source: "//bigquery.googleapis.com/projects/opm-looker-core-demo-instance/datasets/sales_analytics_demo/tables/tbl_subscriptions"
+        primary_key:
+          - sub_id
+        fields:
+          - name: subscription_id
+            expression: sub_id
+            datatype: String
+            description: "Unique commercial subscription contract identifier (Primary Key)."
+          - name: account_id
+            expression: acc_id
+            datatype: String
+            description: "Foreign key referencing Account.acc_id."
+          - name: sku_tier
+            expression: sku_tier
+            datatype: String
+            description: "Subscribed product SKU package (Enterprise Data Cloud, AI Governance Suite, Semantic Analytics Pro)."
+          - name: billing_cadence
+            expression: billing_cadence
+            datatype: String
+            description: "Contract billing terms (Annual, Multi-Year)."
+          - name: contract_arr
+            expression: contract_arr_usd
+            datatype: Decimal
+            description: "Committed annual recurring revenue (ARR) in USD for the subscription contract."
+          - name: contract_start_date
+            expression: contract_start_date
+            datatype: Date
+            description: "Effective start date of the subscription contract."
+          - name: renewal_date
+            expression: renewal_date
+            datatype: Date
+            description: "Next scheduled contract renewal date."
+
+      - name: MrrMovement
+        description: "Monthly recurring revenue ledger events tracking starting, expansion, and churned MRR by customer account, subscription, and billing month."
+        source: "//bigquery.googleapis.com/projects/opm-looker-core-demo-instance/datasets/sales_analytics_demo/tables/fct_mrr_movements"
+        primary_key:
+          - mrr_event_id
+        fields:
+          - name: mrr_event_id
+            expression: mrr_event_id
+            datatype: String
+            description: "Unique identifier for the monthly recurring revenue ledger event (Primary Key)."
+          - name: account_id
+            expression: acc_id
+            datatype: String
+            description: "Foreign key referencing Account.acc_id."
+          - name: subscription_id
+            expression: sub_id
+            datatype: String
+            description: "Foreign key referencing Subscription.sub_id."
+          - name: billing_month
+            expression: billing_month
+            datatype: Date
+            description: "First day of the billing month for the MRR ledger snapshot."
+          - name: starting_mrr
+            expression: start_mrr_usd
+            datatype: Decimal
+            description: "Starting monthly recurring revenue at the beginning of the billing period in USD."
+          - name: expansion_mrr
+            expression: expansion_mrr_usd
+            datatype: Decimal
+            description: "Additional monthly recurring revenue from seat upgrades and add-on SKUs in USD."
+          - name: churn_mrr
+            expression: churned_mrr_usd
+            datatype: Decimal
+            description: "Monthly recurring revenue lost due to full subscription cancellations in USD."
+
+    relationships:
+      - name: subscription_account
+        description: "Links each commercial Subscription contract to its owning enterprise Account."
+        from: Subscription
+        to: Account
+        from_columns:
+          - acc_id
+        to_columns:
+          - acc_id
+      - name: mrr_movement_subscription
+        description: "Links each monthly recurring revenue (MrrMovement) ledger event to its governing Subscription contract."
+        from: MrrMovement
+        to: Subscription
+        from_columns:
+          - sub_id
+        to_columns:
+          - sub_id
+      - name: account_mrr_movements
+        description: "Links each monthly recurring revenue (MrrMovement) ledger event directly to its parent enterprise Account."
+        from: MrrMovement
+        to: Account
+        from_columns:
+          - acc_id
+        to_columns:
+          - acc_id
+
+    metrics:
+      - name: total_contract_arr
+        entity: Subscription
+        expression: "SUM(Subscription.contract_arr)"
+        datatype: Decimal
+        description: "Total committed annual recurring revenue (ARR) in USD across active subscriptions."
+      - name: total_starting_mrr
+        entity: MrrMovement
+        expression: "SUM(MrrMovement.starting_mrr)"
+        datatype: Decimal
+        description: "Total starting monthly recurring revenue in USD across the selected period."
+      - name: total_expansion_mrr
+        entity: MrrMovement
+        expression: "SUM(MrrMovement.expansion_mrr)"
+        datatype: Decimal
+        description: "Total expansion monthly recurring revenue in USD."
+      - name: total_churn_mrr
+        entity: MrrMovement
+        expression: "SUM(MrrMovement.churn_mrr)"
+        datatype: Decimal
+        description: "Total churned monthly recurring revenue in USD."
+      - name: net_retained_mrr
+        entity: MrrMovement
+        expression: "SUM(MrrMovement.starting_mrr) + SUM(MrrMovement.expansion_mrr) - SUM(MrrMovement.churn_mrr)"
+        datatype: Decimal
+        description: "Ending retained monthly recurring revenue in USD (starting + expansion - churn)."
+      - name: net_revenue_retention
+        entity: MrrMovement
+        expression: "(SUM(MrrMovement.starting_mrr) + SUM(MrrMovement.expansion_mrr) - SUM(MrrMovement.churn_mrr)) / NULLIF(SUM(MrrMovement.starting_mrr), 0)"
+        datatype: Decimal
+        description: "Certified Net Revenue Retention (NRR) ratio measuring retained and expanded recurring revenue relative to starting MRR."
