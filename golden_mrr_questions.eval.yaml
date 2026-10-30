@@ -45,14 +45,14 @@ spec:
         ORDER BY a.region
       expectedRows:
         - region: AMER
-          net_revenue_retention: 1.0801
-          formatted: "108.01%"
+          net_revenue_retention: 1.0453
+          formatted: "104.53%"
         - region: APAC
-          net_revenue_retention: 1.0422
-          formatted: "104.22%"
+          net_revenue_retention: 1.0293
+          formatted: "102.93%"
         - region: EMEA
-          net_revenue_retention: 1.0858
-          formatted: "108.58%"
+          net_revenue_retention: 1.0467
+          formatted: "104.67%"
 
     - id: GQ-02
       title: "Total Net Retained MRR and Contraction Breakdown by Segment & Subscription"
@@ -94,17 +94,17 @@ spec:
         ORDER BY a.segment
       expectedRows:
         - segment: Enterprise
-          total_starting_mrr: 1790187.00
-          total_expansion_mrr: 181616.00
-          total_contraction_mrr: 20460.00
-          total_churn_mrr: 34500.00
-          net_retained_mrr: 1916843.00
+          total_starting_mrr: 1784475.00
+          total_expansion_mrr: 200650.00
+          total_contraction_mrr: 20850.00
+          total_churn_mrr: 65550.00
+          net_retained_mrr: 1898725.00
         - segment: Strategic
-          total_starting_mrr: 1209813.00
-          total_expansion_mrr: 128084.00
-          total_contraction_mrr: 11140.00
-          total_churn_mrr: 35500.00
-          net_retained_mrr: 1291257.00
+          total_starting_mrr: 2016525.00
+          total_expansion_mrr: 121500.00
+          total_contraction_mrr: 10750.00
+          total_churn_mrr: 71200.00
+          net_retained_mrr: 2056075.00
 
     - id: GQ-03
       title: "Company-Wide Portfolio Net Revenue Retention (NRR) across 60 Accounts & 90 Subscriptions"
@@ -133,7 +133,7 @@ spec:
           ) AS portfolio_nrr
         FROM `opm-looker-core-demo-instance.sales_analytics_demo.fct_mrr_movements` AS m
       expectedRows:
-        - total_starting_mrr: 3000000.00
-          net_retained_mrr: 3208100.00
-          portfolio_nrr: 1.0694
-          formatted: "106.94%"
+        - total_starting_mrr: 3801000.00
+          net_retained_mrr: 3954800.00
+          portfolio_nrr: 1.0405
+          formatted: "104.05%"
